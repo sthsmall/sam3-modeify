@@ -151,3 +151,7 @@ Thumbs.db
 # BPE vocabulary files
 *.bpe
 *.vocab
+
+
+/demo/tracking_results/
+/pre/eval/results/

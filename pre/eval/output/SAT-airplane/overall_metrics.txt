@@ -1,0 +1,15 @@
+Overall metrics for SAT-airplane
+Date: 2026-03-29 22:39:51
+Prompt: airplane
+
+MOTA: -7.2677
+MOTP: 0.5206
+IDF1: 0.1692
+IDP: 0.1394
+IDR: 0.4598
+IDs: 0.0000
+FM: 7.1622
+MT: 0.0000
+ML: 0.0000
+FP: 2523.1892
+FN: 173.2162

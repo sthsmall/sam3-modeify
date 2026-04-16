@@ -34,6 +34,7 @@ class Sam3VideoPredictor(Sam3BasePredictor):
         video_loader_type="cv2",
         apply_temporal_disambiguation: bool = True,
         compile: bool = False,
+        load_from_HF: bool = True,
     ):
         super().__init__()
         self.async_loading_frames = async_loading_frames
@@ -49,6 +50,7 @@ class Sam3VideoPredictor(Sam3BasePredictor):
                 strict_state_dict_loading=strict_state_dict_loading,
                 apply_temporal_disambiguation=apply_temporal_disambiguation,
                 compile=compile,
+                load_from_HF=load_from_HF,
             )
             .cuda()
             .eval()
