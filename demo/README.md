@@ -43,8 +43,11 @@ pip install -e ".[notebooks]"
    ```bash
    pip install huggingface_hub
    hf auth login
-   ```
-3. 模型文件会在首次运行时自动下载。
+   ```### 3. 文本提示示例
+- **demo_text_prompt.py** - 文本提示分割示例
+
+### 4. 批量视频跟踪示例
+- **my_demo.py** - 批量处理 MOT 格式图像序列的视频目标跟踪
 
 ## 使用方法
 
@@ -72,6 +75,22 @@ python demo_video_segmentation.py
 ```bash
 python demo_text_prompt.py
 ```
+
+### 运行批量视频跟踪示例
+```bash
+python my_demo.py
+```
+
+> **my_demo.py 配置说明**
+> - 默认使用 LoRA 微调模型: `sam3_merged_video.pt`
+> - 默认文本提示: `TEXT_PROMPT = "plane"` (可改为 "ship" 等)
+> - 数据集路径: `/mnt/d/dataset/laboratory_data/`
+> - 输出目录: `./demo/tracking_results/`
+> - 支持的子集: `AIR-aircraft` (可修改代码中的 `subset` 变量)
+> - 输出格式:
+>   - `_tracking.mp4` - 可视化跟踪视频
+>   - `_mot.txt` - MOT 格式跟踪结果
+>   - `_coco.json` - COCO 格式分割结果
 
 ## 注意事项
 

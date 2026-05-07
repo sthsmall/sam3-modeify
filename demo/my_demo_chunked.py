@@ -239,15 +239,14 @@ def process_sequence(predictor, seq_name, seq_path, output_dir, text_prompt):
     for chunk_idx in range(num_chunks):
         start_frame = chunk_idx * CHUNK_SIZE
         end_frame = min(start_frame + CHUNK_SIZE, total_frames) - 1
-        frames_to_track = end_frame - start_frame + 1
-        print(f"  分段 {chunk_idx+1}/{num_chunks}: 起始帧={start_frame}, 结束帧={end_frame}, 帧数={frames_to_track}")
+        print(f"  分段 {chunk_idx+1}/{num_chunks}: 起始帧={start_frame}, 结束帧={end_frame}")
 
         for frame_data in predictor.handle_stream_request(
             request=dict(
                 type="propagate_in_video",
                 session_id=session_id,
                 start_frame_idx=start_frame,
-                max_frame_num_to_track=frames_to_track,
+                max_frame_num_to_track=CHUNK_SIZE,
                 propagation_direction="forward",
             )
         ):
@@ -260,29 +259,27 @@ def process_sequence(predictor, seq_name, seq_path, output_dir, text_prompt):
         if chunk_idx < num_chunks - 1:
             inference_state = predictor._all_inference_states[session_id]["state"]
             
-            tracker_states = inference_state.get("tracker_inference_states", [])
-            total_tracker_frames_removed = 0
-            for ts in tracker_states:
-                if "output_dict" in ts:
-                    if "non_cond_frame_outputs" in ts["output_dict"]:
-                        non_cond = ts["output_dict"]["non_cond_frame_outputs"]
-                        frames_to_remove = [f for f in list(non_cond.keys()) if f <= end_frame - num_keep_frames]
-                        for f in frames_to_remove:
-                            out = non_cond.pop(f, None)
-                            if out is not None:
-                                for k, v in list(out.items()):
-                                    if isinstance(v, torch.Tensor):
-                                        del v
-                        total_tracker_frames_removed += len(frames_to_remove)
-            
-            cached_frame_outputs = inference_state.get("cached_frame_outputs", {})
-            frames_to_remove = [f for f in list(cached_frame_outputs.keys()) if f <= end_frame - num_keep_frames]
+            non_cond_frames = inference_state["output_dict"]["non_cond_frame_outputs"]
+            frames_to_remove = [f for f in list(non_cond_frames.keys()) if f <= end_frame - num_keep_frames]
             for f in frames_to_remove:
-                out = cached_frame_outputs.pop(f, None)
+                out = non_cond_frames.pop(f, None)
                 if out is not None:
                     for k, v in list(out.items()):
                         if isinstance(v, torch.Tensor):
                             del v
+            
+            tracker_states = inference_state.get("tracker_inference_states", [])
+            if tracker_states:
+                for ts in tracker_states:
+                    if hasattr(ts, 'output_dict') and 'non_cond_frame_outputs' in ts.output_dict:
+                        ts_non_cond = ts.output_dict['non_cond_frame_outputs']
+                        for f in list(ts_non_cond.keys()):
+                            if f <= end_frame - num_keep_frames:
+                                out = ts_non_cond.pop(f, None)
+                                if out is not None:
+                                    for k, v in list(out.items()):
+                                        if isinstance(v, torch.Tensor):
+                                            del v
             
             feature_cache = inference_state.get("feature_cache", {})
             keys_to_remove = [k for k in list(feature_cache.keys()) if isinstance(k, int) and k <= end_frame - 10]
@@ -290,12 +287,8 @@ def process_sequence(predictor, seq_name, seq_path, output_dir, text_prompt):
                 v = feature_cache.pop(k, None)
                 if isinstance(v, torch.Tensor):
                     del v
-                elif isinstance(v, tuple):
-                    for item in v:
-                        if isinstance(item, torch.Tensor):
-                            del item
             
-            print(f"    清理了 {total_tracker_frames_removed} tracker帧, {len(frames_to_remove)} 帧缓存, {len(keys_to_remove)} 特征缓存")
+            print(f"    清理了 {len(frames_to_remove)} 帧, {len(keys_to_remove)} 特征缓存")
 
         torch.cuda.empty_cache()
         gc.collect()
@@ -354,12 +347,11 @@ def main():
             
             print(f"\n--- {split} 集: {len(sequences)} 个序列 ---")
             for i, (seq_name, seq_path) in enumerate(sequences):
-                out_dir = os.path.join(OUTPUT_DIR, subset, split)
-                mot_path = os.path.join(out_dir, f"{seq_name}_mot.txt")
-                if os.path.isfile(mot_path):
-                    print(f"\n[{i+1}/{len(sequences)}] {seq_name} - 已处理，跳过")
+                if "43" not in seq_name :
                     continue
+
                 print(f"\n[{i+1}/{len(sequences)}] {seq_name}")
+                out_dir = os.path.join(OUTPUT_DIR, subset, split)
                 process_sequence(predictor, seq_name, seq_path, out_dir, TEXT_PROMPT)
 
 

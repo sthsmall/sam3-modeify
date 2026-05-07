@@ -157,3 +157,6 @@ Thumbs.db
 /pre/eval/results/
 /pre/eval/output/
 /pre/eval/videos/
+
+/eval
+*.mp4

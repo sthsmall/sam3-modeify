@@ -15,8 +15,13 @@ from sam3.visualization_utils import (
 
 DATASET_ROOT = "/mnt/d/dataset/laboratory_data/"
 CHECKPOINT_PATH = "/mnt/d/projects/specific/sam3/sam3/sam3.pt"
+# CHECKPOINT_PATH = "/mnt/d/projects/specific/SAM3_LoRA/sam3_merged_video.pt"
 
-TEXT_PROMPT = "plane"
+TEXT_PROMPT = "aircraft"
+# TEXT_PROMPT = "ship"
+
+
+
 OUTPUT_DIR = "./demo/tracking_results"
 
 
@@ -223,7 +228,7 @@ def process_sequence(predictor, seq_name, seq_path, output_dir, text_prompt):
         request=dict(
             type="propagate_in_video",
             session_id=session_id,
-            max_frame_num_to_track=CHUNK_SIZE,
+            # max_frame_num_to_track=CHUNK_SIZE,
         )
     ):
         fi = frame_data["frame_index"]
@@ -290,21 +295,14 @@ def main():
         print(f"处理数据集: {subset}")
         print(f"{'='*60}")
 
-        for split in ["train", "test"]:
+        for split in ["train"]:
             sequences = get_sequences(dataset_path, split)
             if not sequences:
                 continue
-            flag = True
             print(f"\n--- {split} 集: {len(sequences)} 个序列 ---")
             for i, (seq_name, seq_path) in enumerate[tuple[str, str]](sequences):
-                if "43" not in seq_name and flag:
-                    continue
-                if "43" in seq_name:
-                    flag = False
-                    continue
-
                 print(f"\n[{i+1}/{len(sequences)}] {seq_name}")
-                out_dir = os.path.join(OUTPUT_DIR, subset, split)
+                out_dir = os.path.join(OUTPUT_DIR, split)
                 process_sequence(predictor, seq_name, seq_path, out_dir, TEXT_PROMPT)
 
 
